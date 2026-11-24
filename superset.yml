@@ -1,0 +1,20 @@
+services:
+  superset:
+    image: apache/superset:3.1.3
+    container_name: superset
+    ports:
+      - "8088:8088"
+    environment:
+      SUPERSET_SECRET_KEY: abc123456789
+    command: >
+      sh -c "pip install pyhive thrift thrift-sasl &&
+             superset db upgrade &&
+             superset fab create-admin --username admin --firstname admin --lastname admin --email admin@test.com --password 123456 &&
+             superset init &&
+             gunicorn --bind 0.0.0.0:8088 --workers 2 superset.app:create_app()"
+    networks:
+      - xmsx_default
+
+networks:
+  xmsx_default:
+    external: true

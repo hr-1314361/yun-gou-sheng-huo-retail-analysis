@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>云购生活 · 新零售经营数据大屏</title>
+<link rel="stylesheet" href="css/screen.css">
+</head>
+<body>
+<!-- 1920×1080 设计稿，JS 按窗口等比缩放（scale 方案） -->
+<div id="stage" class="stage">
+  <header class="header">
+    <div class="hd-side hd-left" id="filterBar">
+      <span class="hd-chip">ENTERPRISE DW</span>
+    </div>
+    <div class="hd-title">
+      <h1>云购生活 · 新零售经营数据大屏</h1>
+      <p>Enterprise Data Warehouse &amp; Business Analytics · ydsh_ads</p>
+    </div>
+    <div class="hd-side hd-right">
+      <span class="live"><i></i>实时</span>
+      <span id="clock" class="clock">--:--:--</span>
+    </div>
+  </header>
+
+  <section class="kpi-row" id="kpiRow"></section>
+
+  <main class="grid">
+    <section class="panel panel-line">
+      <div class="panel-hd"><h2>销售趋势</h2><span class="tag">GMV / 订单量 · 月度</span></div>
+      <div class="chart" id="chartTrend"></div>
+    </section>
+
+    <section class="panel panel-map">
+      <div class="panel-hd"><h2>区域销售分布</h2><span class="tag">按省份 GMV</span></div>
+      <div class="chart" id="chartMap"></div>
+    </section>
+
+    <section class="panel panel-bar">
+      <div class="panel-hd"><h2>品类销售对比</h2><span class="tag">GMV 降序</span></div>
+      <div class="chart" id="chartBar"></div>
+    </section>
+
+    <section class="panel panel-heat">
+      <div class="panel-hd"><h2>下单时段 × 品类热力</h2><span class="tag">GMV / 万元</span></div>
+      <div class="chart" id="chartHeat"></div>
+    </section>
+
+    <section class="panel panel-scatter">
+      <div class="panel-hd"><h2>客单价 × 销量</h2><span class="tag">气泡=GMV</span></div>
+      <div class="chart" id="chartScatter"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>数据来源：Hive 数仓 ydsh_ads 层</span>
+    <span id="period">统计周期：2024-01-01 ~ 2024-12-31</span>
+    <span>交互：点击省份 / 品类 / 月份 / 气泡联动，再次点击取消</span>
+    <span id="updated">更新时间：--</span>
+  </footer>
+</div>
+
+<script src="static/echarts.min.js"></script>
+<script src="data/china_geo.js"></script>
+<script src="data/dashboard_data.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

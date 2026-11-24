@@ -43,3 +43,25 @@ docker/hive/lib/mysql-connector-j-8.0.33.jar
 # 压测临时
 *.db
 results/*.csv
+
+# 压缩包与提交归档
+*.zip
+*.rar
+*.7z
+
+# 临时结果文本
+*_result.txt
+step*_result.txt
+
+# 临时工作目录
+_tmp_*/
+模拟数据/
+
+# 周志根目录副本（已归档至各周文件夹）
+第*周周志_胡蕊.docx
+
+# 第1周重复目录
+第1周_胡蕊/
+
+# 第2周重复提交目录（AI日志已归档至第2周-胡蕊）
+第2周_提交/
