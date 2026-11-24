@@ -1,0 +1,47 @@
+version: "3.8"
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: hive-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: metastore
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    command:
+      --character-set-server=utf8
+      --collation-server=utf8_general_ci
+
+  hive-metastore:
+    image: apache/hive:4.0.0
+    container_name: hive-metastore
+    restart: always
+    depends_on:
+      - mysql
+    environment:
+      SERVICE_NAME: metastore
+      HIVE_METASTORE_DB_HOST: mysql
+      HIVE_METASTORE_DB_PORT: 3306
+      HIVE_METASTORE_DB_NAME: metastore
+      HIVE_METASTORE_DB_USER: root
+      HIVE_METASTORE_DB_PASSWORD: root
+    ports:
+      - "9083:9083"
+
+  hive-server2:
+    image: apache/hive:4.0.0
+    container_name: hive-server2
+    restart: always
+    depends_on:
+      - hive-metastore
+    environment:
+      SERVICE_NAME: hiveserver2
+    ports:
+      - "10000:10000"
+      - "10002:10002"
+
+volumes:
+  mysql-data:

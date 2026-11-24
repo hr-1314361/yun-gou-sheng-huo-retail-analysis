@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+
+# 环境变量与密钥
+.env
+*.env
+.env.local
+
+# 大数据临时文件
+*.log
+*.jar.original
+metastore_db/
+derby.log
+hdfs/
+tmp/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 系统
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 大文件依赖
+echarts/static/echarts.min.js
+echarts/data/dashboard_data.js
+echarts/data/dashboard_data.json
+echarts/data/china_geo.js
+echarts/static/china.json
+docker/hive/lib/mysql-connector-j-8.0.33.jar
+第4周-胡蕊/streamlit/.venv/
+
+# 压测临时
+*.db
+results/*.csv

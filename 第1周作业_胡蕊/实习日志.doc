@@ -1,0 +1,116 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>实习日志（第1周）</title>
+<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
+<style>
+@page Section1 { size: 595.3pt 841.9pt; margin: 72pt 90pt 72pt 90pt; }
+div.Section1 { page: Section1; }
+body { font-family: 宋体, SimSun, serif; font-size: 12pt; line-height: 1.6; color: #000; }
+h1 { font-family: 黑体, SimHei, sans-serif; font-size: 18pt; text-align: center; margin: 6pt 0 4pt 0; }
+h2 { font-family: 黑体, SimHei, sans-serif; font-size: 14pt; margin: 14pt 0 6pt 0; border-bottom: 1pt solid #888; padding-bottom: 2pt; }
+h3 { font-family: 黑体, SimHei, sans-serif; font-size: 12pt; margin: 10pt 0 4pt 0; }
+p { margin: 4pt 0; text-align: justify; }
+table.info { border-collapse: collapse; width: 100%; margin: 8pt 0; }
+table.info td { border: 0.75pt solid #555; padding: 4pt 6pt; font-size: 11pt; }
+li { margin: 2pt 0; text-align: justify; }
+.sub { color: #333; font-size: 11pt; }
+</style>
+</head>
+<body>
+<div class="Section1">
+
+<h1>实习日志</h1>
+
+<table class="info" align="center">
+<tr><td style="width:25%; background:#EFEFEF;"><b>姓名</b></td><td style="width:25%;">胡蕊</td><td style="width:25%; background:#EFEFEF;"><b>岗位</b></td><td style="width:25%;">大数据开发实习生</td></tr>
+<tr><td style="background:#EFEFEF;"><b>实习时间</b></td><td>2026年10月26日 — 10月30日</td><td style="background:#EFEFEF;"><b>项目名称</b></td><td>云购生活数据仓库项目</td></tr>
+<tr><td style="background:#EFEFEF;"><b>本周阶段</b></td><td colspan="3">第1周：环境搭建与ODS层数据治理</td></tr>
+</table>
+
+<h2>2026年10月26日（周一）</h2>
+
+<h3>一、今日工作内容</h3>
+<ol>
+<li>搭建本地大数据开发环境：安装并启动 Docker Desktop（WSL2 后端）。</li>
+<li>编写 docker-compose.yml，编排三个容器：MySQL 8.0（Hive 元数据库）、Hive Metastore（端口 9083）、HiveServer2（端口 10000/10002）。</li>
+<li>执行 docker compose up -d 启动集群，docker ps 确认三容器状态均为 Up。</li>
+</ol>
+
+<h3>二、遇到的问题与解决</h3>
+<p>问题：首次启动报 "bind: Only one usage of each socket address"，3306 端口被本机已有 MySQL80 服务占用。<br>
+解决：将 compose 中 MySQL 端口映射改为 3307:3306，Hive 通过容器内部网络（服务名 mysql:3306）连接元数据库，不受影响。</p>
+
+<h3>三、今日收获</h3>
+<p>掌握了 docker-compose 多容器编排的基本写法，理解了容器间通过服务名通信的机制。</p>
+
+<h2>2026年10月27日（周二）</h2>
+
+<h3>一、今日工作内容</h3>
+<ol>
+<li>使用 beeline 连接 HiveServer2（jdbc:hive2://localhost:10000），连接成功。</li>
+<li>创建数仓 ODS 层数据库 ydsh_ods，按数据字典设计并创建 6 张 ODS 表：ods_user、ods_product、ods_store、ods_order、ods_order_item、ods_user_behavior。</li>
+<li>建表要点：TEXTFILE 存储格式、逗号分隔（FIELDS TERMINATED BY ','）、skip.header.line.count=1 跳过 CSV 表头。</li>
+<li>将 6 个 CSV 数据文件复制进容器，通过 LOAD DATA LOCAL INPATH 加载数据。</li>
+<li>加载后发现所有表行数翻倍（如 ods_order 应为 15600 行，实际 31200 行），排查为重复执行 LOAD DATA 未先清理所致。</li>
+</ol>
+
+<h3>二、遇到的问题与解决</h3>
+<p>问题：重复加载数据导致行数翻倍，唯一性检查出现大量虚假重复。<br>
+解决：对所有表执行 TRUNCATE TABLE 后重新加载，最终验证行数与数据字典一致：1000 / 600 / 60 / 15600 / 37549 / 60000。</p>
+
+<h3>三、今日收获</h3>
+<p>理解了 LOAD DATA 是追加而非覆盖语义，数据入库前先 TRUNCATE 是必要的操作习惯；掌握了 Hive 外部表与分隔符配置。</p>
+
+<h2>2026年10月28日（周三）</h2>
+
+<h3>一、今日工作内容</h3>
+<ol>
+<li>编写数据质量五维度评估 SQL：完整性（空值统计）、唯一性（主键重复）、一致性（外键孤儿记录）、有效性（取值范围）、准确性（业务逻辑校验）。</li>
+<li>完整性检查：ods_user 中 gender 空值 84 条、age 空值 51 条、member_level 空值 14 条、email 空值 193 条（共 1000 行）。</li>
+<li>一致性检查：订单→用户、订单→门店、订单明细→订单、订单明细→商品、行为→用户共 5 条外键关系，孤儿记录均为 0，关联完整。</li>
+<li>有效性检查：pay_amount&lt;0 共 310 条、discount_amount&lt;0 共 769 条、quantity≤0 共 718 条、unit_price&lt;0 共 798 条、price&lt;0 共 20 条、年龄越界 12 条。</li>
+<li>准确性检查：3599 条订单日期早于用户注册日期，324 条折扣金额大于实付金额。</li>
+</ol>
+
+<h3>二、遇到的问题与解决</h3>
+<p>问题：多条统计 SQL 用 UNION ALL 合并执行时报 "Counters limit exceeded: Too many counters: 121 max=120"（Tez 引擎计数器上限）。<br>
+解决：将一致性检查拆分为 5 个独立 SQL 文件分别执行，全部通过。</p>
+
+<h3>三、今日收获</h3>
+<p>熟悉了数据质量五维度评估方法；了解到 Hive on Tez 对单作业计数器数量有限制，复杂多表 UNION 需拆分执行。</p>
+
+<h2>2026年10月29日（周四）</h2>
+
+<h3>一、今日工作内容</h3>
+<ol>
+<li>缺失值处理：创建 dwd_user 表，age 用均值填充（保留 4 位小数），email 空值统一标记为 unknown@；创建 dwd_product 表，launch_date 缺失的 11 条补默认值。处理后验证三字段空值均为 0。</li>
+<li>重复值处理：检测出 ods_order.order_id 重复 600 条；使用 ROW_NUMBER() OVER(PARTITION BY order_id ORDER BY order_date, order_time) 窗口函数保留每组第一条，通过 INSERT OVERWRITE 输出 dwd_order，行数由 15600 降为 15000；order_item 无重复（37549 条保持不变）。</li>
+</ol>
+
+<h3>二、遇到的问题与解决</h3>
+<p>问题1：CSV 中“空值”实际是空字符串而非 NULL，COALESCE 不生效。<br>
+解决：改用 CASE WHEN col='' THEN … 修复。<br>
+问题2：INSERT 时 SELECT * 会带上 rn 排序列导致列数不匹配报错。<br>
+解决：改为显式列出目标表字段名。</p>
+
+<h3>三、今日收获</h3>
+<p>掌握了 COALESCE 与 CASE WHEN 两种空值处理方式、窗口函数去重的标准写法；理解了 Hive 不支持 UPDATE/DELETE，清洗需通过 INSERT OVERWRITE 生成新表。</p>
+
+<h2>2026年10月30日（周五）</h2>
+
+<h3>一、今日工作内容</h3>
+<ol>
+<li>整理本周交付物：README.md（团队分工/项目目标/阶段计划/技术栈）、环境搭建笔记（含 5 张关键截图）、.gitignore（忽略数据文件/密钥/日志/临时脚本）。</li>
+<li>编写《数据质量预评估表.xlsx》，将五维度评估真实执行结果量化填表。</li>
+<li>编写 AI 协同日志，记录本周人机协作过程：AI 生成了建表/清洗 SQL 初稿与问题排查建议，人工完成数据核对、SQL 修正与结果验证。</li>
+<li>Git 版本管理：git init 并按 feat/docs 规范提交；数据文件通过 .gitignore 排除在版本库之外。</li>
+<li>全部交付物打包为提交压缩包，本周任务完成。</li>
+</ol>
+
+<h3>二、本周总结</h3>
+<p>本周完成了从 Docker 环境搭建到数仓 ODS 层构建、数据质量评估与清洗的完整流程。核心产出：6 张 ODS 表（数据与数据字典完全一致）、五维度质量评估报告、dwd 层清洗后标准表（dwd_user / dwd_product / dwd_order）。对 Hive SQL 优化、Tez 引擎特性、数据质量治理方法论有了实践经验，为下周数仓分层建模打下了基础。</p>
+
+</div>
+</body>
+</html>
