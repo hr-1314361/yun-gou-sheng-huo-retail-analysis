@@ -1,0 +1,78 @@
+# 数据库表结构（Schema）
+
+## 表：ydsh_dwd.dwd_order
+注释：订单明细事实表，按order_date分区
+| 字段名 | 类型 | 注释 |
+|--------|------|------|
+| order_id | string | 订单ID |
+| user_id | string | 用户ID |
+| store_id | string | 门店ID |
+| product_id | string | 商品ID |
+| quantity | int | 数量 |
+| unit_price | double | 成交单价 |
+| amount | double | 明细金额=数量*单价 |
+| pay_type | string | 支付方式(支付宝/微信支付/货到付款/银行卡) |
+| order_status | string | 订单状态(待支付/已支付/已完成/已取消/退款中) |
+| channel | string | 下单渠道(APP/小程序/PC官网/门店) |
+| order_date | string | 订单日期(yyyy-MM-dd, 分区列) |
+
+## 表：ydsh_dwd.dim_product
+注释：商品维度表
+| 字段名 | 类型 | 注释 |
+|--------|------|------|
+| product_id | string | 商品ID |
+| product_name | string | 商品名 |
+| category | string | 品类 |
+| sub_category | string | 子类目 |
+| brand | string | 品牌 |
+| price | double | 售价 |
+
+## 表：ydsh_dwd.dim_store
+注释：门店维度表
+| 字段名 | 类型 | 注释 |
+|--------|------|------|
+| store_id | string | 门店ID |
+| store_name | string | 门店名 |
+| province | string | 省 |
+| city | string | 市 |
+
+## 表：ydsh_dws.dws_sales_1d
+注释：销售日汇总表
+| 字段名 | 类型 | 注释 |
+|--------|------|------|
+| stat_date | string | 统计日期 |
+| gmv | double | 成交总额(元) |
+| order_cnt | bigint | 订单量 |
+| user_cnt | bigint | 下单用户数 |
+| aov | double | 客单价 |
+
+## 表：ydsh_dws.dws_sales_category_1d
+注释：销售-品类日汇总表
+| 字段名 | 类型 | 注释 |
+|--------|------|------|
+| stat_date | string | 统计日期 |
+| category | string | 品类 |
+| gmv | double | 品类成交总额 |
+| order_cnt | bigint | 品类订单量 |
+| gmv_share | double | 品类GMV占比 |
+
+## 表：ydsh_ads.ads_category_topn
+注释：品类销售TopN表
+| 字段名 | 类型 | 注释 |
+|--------|------|------|
+| stat_date | string | 统计日期 |
+| category | string | 品类 |
+| gmv | double | 品类GMV |
+| gmv_share | double | 品类GMV占比 |
+| rank_no | int | 品类GMV排名 |
+
+## 表：ydsh_ads.ads_core_kpi
+注释：核心KPI总表
+| 字段名 | 类型 | 注释 |
+|--------|------|------|
+| stat_period | string | 统计周期 |
+| gmv | double | 成交总额 |
+| order_cnt | bigint | 订单量 |
+| user_cnt | bigint | 下单用户数 |
+| aov | double | 客单价 |
+| repurchase_rate | double | 复购率 |

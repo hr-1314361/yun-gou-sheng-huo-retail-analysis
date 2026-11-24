@@ -1,0 +1,263 @@
+{
+  "tables": [
+    {
+      "database": "ydsh_dwd",
+      "table": "dwd_order",
+      "comment": "订单明细事实表，按order_date分区",
+      "columns": [
+        {
+          "name": "order_id",
+          "type": "string",
+          "comment": "订单ID"
+        },
+        {
+          "name": "user_id",
+          "type": "string",
+          "comment": "用户ID"
+        },
+        {
+          "name": "store_id",
+          "type": "string",
+          "comment": "门店ID"
+        },
+        {
+          "name": "product_id",
+          "type": "string",
+          "comment": "商品ID"
+        },
+        {
+          "name": "quantity",
+          "type": "int",
+          "comment": "数量"
+        },
+        {
+          "name": "unit_price",
+          "type": "double",
+          "comment": "成交单价"
+        },
+        {
+          "name": "amount",
+          "type": "double",
+          "comment": "明细金额=数量*单价"
+        },
+        {
+          "name": "pay_type",
+          "type": "string",
+          "comment": "支付方式(支付宝/微信支付/货到付款/银行卡)"
+        },
+        {
+          "name": "order_status",
+          "type": "string",
+          "comment": "订单状态(待支付/已支付/已完成/已取消/退款中)"
+        },
+        {
+          "name": "channel",
+          "type": "string",
+          "comment": "下单渠道(APP/小程序/PC官网/门店)"
+        },
+        {
+          "name": "order_date",
+          "type": "string",
+          "comment": "订单日期(yyyy-MM-dd, 分区列)"
+        }
+      ]
+    },
+    {
+      "database": "ydsh_dwd",
+      "table": "dim_product",
+      "comment": "商品维度表",
+      "columns": [
+        {
+          "name": "product_id",
+          "type": "string",
+          "comment": "商品ID"
+        },
+        {
+          "name": "product_name",
+          "type": "string",
+          "comment": "商品名"
+        },
+        {
+          "name": "category",
+          "type": "string",
+          "comment": "品类"
+        },
+        {
+          "name": "sub_category",
+          "type": "string",
+          "comment": "子类目"
+        },
+        {
+          "name": "brand",
+          "type": "string",
+          "comment": "品牌"
+        },
+        {
+          "name": "price",
+          "type": "double",
+          "comment": "售价"
+        }
+      ]
+    },
+    {
+      "database": "ydsh_dwd",
+      "table": "dim_store",
+      "comment": "门店维度表",
+      "columns": [
+        {
+          "name": "store_id",
+          "type": "string",
+          "comment": "门店ID"
+        },
+        {
+          "name": "store_name",
+          "type": "string",
+          "comment": "门店名"
+        },
+        {
+          "name": "province",
+          "type": "string",
+          "comment": "省"
+        },
+        {
+          "name": "city",
+          "type": "string",
+          "comment": "市"
+        }
+      ]
+    },
+    {
+      "database": "ydsh_dws",
+      "table": "dws_sales_1d",
+      "comment": "销售日汇总表",
+      "columns": [
+        {
+          "name": "stat_date",
+          "type": "string",
+          "comment": "统计日期"
+        },
+        {
+          "name": "gmv",
+          "type": "double",
+          "comment": "成交总额(元)"
+        },
+        {
+          "name": "order_cnt",
+          "type": "bigint",
+          "comment": "订单量"
+        },
+        {
+          "name": "user_cnt",
+          "type": "bigint",
+          "comment": "下单用户数"
+        },
+        {
+          "name": "aov",
+          "type": "double",
+          "comment": "客单价"
+        }
+      ]
+    },
+    {
+      "database": "ydsh_dws",
+      "table": "dws_sales_category_1d",
+      "comment": "销售-品类日汇总表",
+      "columns": [
+        {
+          "name": "stat_date",
+          "type": "string",
+          "comment": "统计日期"
+        },
+        {
+          "name": "category",
+          "type": "string",
+          "comment": "品类"
+        },
+        {
+          "name": "gmv",
+          "type": "double",
+          "comment": "品类成交总额"
+        },
+        {
+          "name": "order_cnt",
+          "type": "bigint",
+          "comment": "品类订单量"
+        },
+        {
+          "name": "gmv_share",
+          "type": "double",
+          "comment": "品类GMV占比"
+        }
+      ]
+    },
+    {
+      "database": "ydsh_ads",
+      "table": "ads_category_topn",
+      "comment": "品类销售TopN表",
+      "columns": [
+        {
+          "name": "stat_date",
+          "type": "string",
+          "comment": "统计日期"
+        },
+        {
+          "name": "category",
+          "type": "string",
+          "comment": "品类"
+        },
+        {
+          "name": "gmv",
+          "type": "double",
+          "comment": "品类GMV"
+        },
+        {
+          "name": "gmv_share",
+          "type": "double",
+          "comment": "品类GMV占比"
+        },
+        {
+          "name": "rank_no",
+          "type": "int",
+          "comment": "品类GMV排名"
+        }
+      ]
+    },
+    {
+      "database": "ydsh_ads",
+      "table": "ads_core_kpi",
+      "comment": "核心KPI总表",
+      "columns": [
+        {
+          "name": "stat_period",
+          "type": "string",
+          "comment": "统计周期"
+        },
+        {
+          "name": "gmv",
+          "type": "double",
+          "comment": "成交总额"
+        },
+        {
+          "name": "order_cnt",
+          "type": "bigint",
+          "comment": "订单量"
+        },
+        {
+          "name": "user_cnt",
+          "type": "bigint",
+          "comment": "下单用户数"
+        },
+        {
+          "name": "aov",
+          "type": "double",
+          "comment": "客单价"
+        },
+        {
+          "name": "repurchase_rate",
+          "type": "double",
+          "comment": "复购率"
+        }
+      ]
+    }
+  ]
+}

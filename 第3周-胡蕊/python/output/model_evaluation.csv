@@ -1,0 +1,3 @@
+﻿model,mae,mape_pct
+linear_regression,85749.76,4.35
+xgboost,97916.77,4.88
