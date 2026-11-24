@@ -1,0 +1,7 @@
+streamlit>=1.32
+pandas>=2.0
+python-dotenv>=1.0
+openai>=1.30
+pyhive>=0.7.0
+thrift>=0.16
+thrift-sasl>=0.4.3

@@ -1,0 +1,219 @@
+# ============================================================
+# 云购生活 · 企业级数据仓库与经营分析系统
+# 一键部署编排：MySQL / Hive Metastore / HiveServer2 / ClickHouse
+#               / Redis / Superset / Streamlit App
+# 启动：docker compose --env-file .env up -d --build
+# 停止：docker compose down
+# ============================================================
+name: ydsh-newretail
+
+services:
+  # ---------------- MySQL：元数据库（Hive Metastore + Superset） ----------------
+  mysql:
+    image: mysql:8.0
+    container_name: ydsh-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: metastore
+      TZ: Asia/Shanghai
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_general_ci
+      - --default-authentication-plugin=mysql_native_password
+      - --max_connections=300
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mysql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks: [ydsh-net]
+
+  # ---------------- Hive Metastore ----------------
+  hive-metastore:
+    build: ./hive
+    image: ydsh/hive:4.0.0
+    container_name: ydsh-hive-metastore
+    restart: unless-stopped
+    environment:
+      SERVICE_NAME: metastore
+      DB_DRIVER: mysql
+      IS_RESUME: "true"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      TZ: Asia/Shanghai
+    volumes:
+      - ./hive/conf/hive-site.xml:/opt/hive/conf/hive-site.xml:ro
+      - hive-warehouse:/user/hive/warehouse
+    ports:
+      - "9083:9083"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/9083' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 90s
+    networks: [ydsh-net]
+
+  # ---------------- HiveServer2 ----------------
+  hive-server2:
+    build: ./hive
+    image: ydsh/hive:4.0.0
+    container_name: ydsh-hive-server2
+    restart: unless-stopped
+    environment:
+      SERVICE_NAME: hiveserver2
+      DB_DRIVER: mysql
+      IS_RESUME: "true"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      TZ: Asia/Shanghai
+    volumes:
+      - ./hive/conf/hive-site.xml:/opt/hive/conf/hive-site.xml:ro
+      - hive-warehouse:/user/hive/warehouse
+    ports:
+      - "10000:10000"
+      - "10002:10002"
+    depends_on:
+      hive-metastore:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/10000' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 120s
+    networks: [ydsh-net]
+
+  # ---------------- ClickHouse：OLAP 即席分析与压测 ----------------
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.3
+    container_name: ydsh-clickhouse
+    restart: unless-stopped
+    environment:
+      CLICKHOUSE_DB: ydsh_ads
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+      TZ: Asia/Shanghai
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+      - ./clickhouse/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "clickhouse-client --password $$CLICKHOUSE_PASSWORD --query 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks: [ydsh-net]
+
+  # ---------------- Redis：Superset 图表缓存 ----------------
+  redis:
+    image: redis:7-alpine
+    container_name: ydsh-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    networks: [ydsh-net]
+
+  # ---------------- Superset：仪表板 ----------------
+  superset:
+    build: ./superset
+    image: ydsh/superset:3.1.3
+    container_name: ydsh-superset
+    restart: unless-stopped
+    environment:
+      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY}
+      SUPERSET_ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD}
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      SUPERSET_DB_NAME: superset
+      REDIS_URL: redis://redis:6379/1
+      TZ: Asia/Shanghai
+    volumes:
+      - ../superset/superset_config.py:/app/pythonpath/superset_config.py:ro
+      - superset-data:/app/superset_home
+    ports:
+      - "8088:8088"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      /bin/sh -c "
+      superset db upgrade &&
+      (superset fab create-admin
+        --username admin
+        --firstname YunGou
+        --lastname Admin
+        --email admin@ydsh.com
+        --password $${SUPERSET_ADMIN_PASSWORD} || true) &&
+      superset init &&
+      gunicorn --bind 0.0.0.0:8088 --workers 2 --timeout 180
+        --limit-request-line 0 --limit-request-field_size 0
+        'superset.app:create_app()'"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request;urllib.request.urlopen('http://127.0.0.1:8088/health')\""]
+      interval: 20s
+      timeout: 8s
+      retries: 15
+      start_period: 120s
+    networks: [ydsh-net]
+
+  # ---------------- Python App：Streamlit 智能问数 ----------------
+  python-app:
+    build:
+      context: ..
+      dockerfile: docker/app/Dockerfile
+    image: ydsh/streamlit-app:1.0
+    container_name: ydsh-python-app
+    restart: unless-stopped
+    environment:
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+      LLM_MODEL: ${LLM_MODEL:-deepseek-chat}
+      HIVE_HOST: hive-server2
+      HIVE_PORT: "10000"
+      HIVE_USER: hive
+      TZ: Asia/Shanghai
+    ports:
+      - "8501:8501"
+    depends_on:
+      # Hive 启动较慢，这里只要求「已启动」，
+      # 应用内置降级逻辑，Hive 未就绪时会自动使用演示数据
+      hive-server2:
+        condition: service_started
+    networks: [ydsh-net]
+
+volumes:
+  mysql-data:
+  hive-warehouse:
+  clickhouse-data:
+  redis-data:
+  superset-data:
+
+networks:
+  ydsh-net:
+    driver: bridge

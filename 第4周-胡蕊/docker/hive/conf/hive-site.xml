@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!--
+  Hive 4.0.0 配置（挂载至容器 /opt/hive/conf/hive-site.xml）
+  要点：
+    1. Metastore 元数据落 MySQL（jdbc:mysql://mysql:3306/metastore）；
+    2. 密码通过环境变量 ${env.MYSQL_ROOT_PASSWORD} 注入，不写死；
+    3. HiveServer2 使用 NOSASL，便于内网与容器内 PyHive 直连；
+    4. 仓库目录使用本地文件系统，挂载命名卷持久化。
+-->
+<configuration>
+
+    <!-- ========== Metastore 元数据库 ========== -->
+    <property>
+        <name>javax.jdo.option.ConnectionURL</name>
+        <value>jdbc:mysql://mysql:3306/metastore?createDatabaseIfNotExist=true&amp;useSSL=false&amp;allowPublicKeyRetrieval=true&amp;characterEncoding=UTF-8&amp;serverTimezone=Asia/Shanghai</value>
+    </property>
+    <property>
+        <name>javax.jdo.option.ConnectionDriverName</name>
+        <value>com.mysql.cj.jdbc.Driver</value>
+    </property>
+    <property>
+        <name>javax.jdo.option.ConnectionUserName</name>
+        <value>root</value>
+    </property>
+    <property>
+        <name>javax.jdo.option.ConnectionPassword</name>
+        <value>${env.MYSQL_ROOT_PASSWORD}</value>
+    </property>
+    <property>
+        <name>datanucleus.schema.autoCreateAll</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>hive.metastore.schema.verification</name>
+        <value>false</value>
+    </property>
+    <property>
+        <name>hive.metastore.warehouse.dir</name>
+        <value>file:///user/hive/warehouse</value>
+    </property>
+
+    <!-- ========== Metastore 服务 ========== -->
+    <property>
+        <name>hive.metastore.uris</name>
+        <value>thrift://hive-metastore:9083</value>
+    </property>
+    <property>
+        <name>hive.metastore.port</name>
+        <value>9083</value>
+    </property>
+
+    <!-- ========== HiveServer2 ========== -->
+    <property>
+        <name>hive.server2.thrift.port</name>
+        <value>10000</value>
+    </property>
+    <property>
+        <name>hive.server2.thrift.bind.host</name>
+        <value>0.0.0.0</value>
+    </property>
+    <property>
+        <name>hive.server2.authentication</name>
+        <value>NOSASL</value>
+    </property>
+    <property>
+        <name>hive.server2.enable.doAs</name>
+        <value>false</value>
+    </property>
+    <property>
+        <name>hive.server2.active.passive.ha.enable</name>
+        <value>false</value>
+    </property>
+
+    <!-- ========== 执行与资源 ========== -->
+    <property>
+        <name>hive.exec.scratchdir</name>
+        <value>/tmp/hive</value>
+    </property>
+    <property>
+        <name>hive.exec.dynamic.partition</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>hive.exec.dynamic.partition.mode</name>
+        <value>nonstrict</value>
+    </property>
+    <property>
+        <name>hive.exec.max.dynamic.partitions</name>
+        <value>1000</value>
+    </property>
+    <property>
+        <name>hive.server2.session.check.interval</name>
+        <value>60000</value>
+    </property>
+    <property>
+        <name>hive.server2.idle.session.timeout</name>
+        <value>1800000</value>
+    </property>
+    <property>
+        <name>hive.server2.idle.operation.timeout</name>
+        <value>600000</value>
+    </property>
+
+    <!-- ========== 压缩与文件格式 ========== -->
+    <property>
+        <name>hive.exec.compress.output</name>
+        <value>false</value>
+    </property>
+    <property>
+        <name>hive.default.fileformat</name>
+        <value>Parquet</value>
+    </property>
+
+    <!-- ========== 日志 ========== -->
+    <property>
+        <name>hive.server2.logging.operation.enabled</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>hive.server2.logging.operation.level</name>
+        <value>EXECUTION</value>
+    </property>
+</configuration>
